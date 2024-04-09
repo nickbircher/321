@@ -1,5 +1,6 @@
 from Crypto.Cipher import AES  
-from base64 import b64encode, b64decode  
+import sys
+sys.path.insert(0, "..")
 import pkcs7  
 
 
@@ -13,12 +14,12 @@ def cbc_encrypt(plaintext, key, iv):
         ciphered_block = cipher.encrypt(xor_block)  # Encrypt the XORed block using AES cipher
         ciphertext += ciphered_block  # Append the encrypted block to the ciphertext
         iv = ciphered_block  # Update the IV with the encrypted block
-    return b64encode(ciphertext).decode()  # Return the base64 encoded ciphertext as a string
+    return ciphertext
 
 
 def cbc_decrypt(ciphertext, key, iv):
     cipher = AES.new(key, AES.MODE_ECB)  # Create AES cipher object with ECB mode
-    ciphertext = b64decode(ciphertext)  # Decode the base64 encoded ciphertext
+    ciphertext = ciphertext  
     if len(ciphertext) % AES.block_size != 0:
         raise ValueError("Ciphertext is not a multiple of the block size")  # Raise an error if the ciphertext length is not a multiple of the block size
     plaintext = bytes()  # Initialize an empty byte string to store the plaintext
@@ -31,4 +32,30 @@ def cbc_decrypt(ciphertext, key, iv):
     
     plaintext = pkcs7.pkcs7_unpad(plaintext, AES.block_size)  # Unpad the plaintext using PKCS7 padding
     
-    return plaintext[len(iv):].decode()  # Return the plaintext as a string
+    return plaintext[len(iv):]
+
+
+def encrypt_file(filename, key, iv):
+    with open(filename, "rb") as f:
+        file = f.read()
+
+    # Remove the header of the BMP file
+    header = file[:54]
+    file = file[54:]
+
+    # Add the header back to the encrypted file and write to new file
+    ciphertext = header + cbc_encrypt(file, key, iv)
+
+    # filename[3:] removes the "../" from the filename
+    with open("cbc-encrypted-" + filename[3:], "wb") as f:
+        f.write(ciphertext)
+
+
+def main():
+    sixteen_byte_key = b"iisixteenbytekey"
+    iv = b"sixteenbytekeyii"
+    encrypt_file("../cp-logo.bmp", sixteen_byte_key, iv)
+    encrypt_file("../mustang.bmp", sixteen_byte_key, iv)
+
+if __name__ == "__main__":
+    main()

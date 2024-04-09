@@ -1,6 +1,6 @@
 from Crypto.Cipher import AES
-from base64 import b64decode
-from util import hex_to_bytes, bytes_to_hex
+import sys
+sys.path.insert(0, "..")
 import pkcs7
 
 
@@ -34,14 +34,15 @@ def encrypt_file(filename, key):
     # Add the header back to the encrypted file and write to new file
     ciphertext = header + ecb_encrypt(key, file)
 
-    with open("ecb-encrypted-" + filename, "wb") as f:
+    # filename[3:] removes the "../" from the filename
+    with open("ecb-encrypted-" + filename[3:], "wb") as f:
         f.write(ciphertext)
 
 
 def main():
     sixteen_byte_key = b"iisixteenbytekey"
-    encrypt_file("cp-logo.bmp", sixteen_byte_key)
-    encrypt_file("mustang.bmp", sixteen_byte_key)
+    encrypt_file("../cp-logo.bmp", sixteen_byte_key)
+    encrypt_file("../mustang.bmp", sixteen_byte_key)
 
 if __name__ == "__main__":
     main()
