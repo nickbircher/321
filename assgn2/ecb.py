@@ -34,7 +34,7 @@ def encrypt_file(filename, key):
     # Add the header back to the encrypted file and write to new file
     ciphertext = header + ecb_encrypt(key, file)
 
-    with open("encrypted-" + filename, "wb") as f:
+    with open("ecb-encrypted-" + filename, "wb") as f:
         f.write(ciphertext)
 
 
