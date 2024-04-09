@@ -21,3 +21,27 @@ def ecb_decrypt(key, ciphertext):
     except ValueError:
         raise ValueError("Invalid padding")
     return message
+
+
+def encrypt_file(filename, key):
+    with open(filename, "rb") as f:
+        file = f.read()
+
+    # Remove the header of the BMP file
+    header = file[:54]
+    file = file[54:]
+
+    # Add the header back to the encrypted file and write to new file
+    ciphertext = header + ecb_encrypt(key, file)
+
+    with open("encrypted-" + filename, "wb") as f:
+        f.write(ciphertext)
+
+
+def main():
+    sixteen_byte_key = b"iisixteenbytekey"
+    encrypt_file("cp-logo.bmp", sixteen_byte_key)
+    encrypt_file("mustang.bmp", sixteen_byte_key)
+
+if __name__ == "__main__":
+    main()
