@@ -40,8 +40,8 @@ def calculate_bitmasks(original, target):
 
     return bitmasks
 
-
-def flip_bits(temp):
+# modify ciphertext returned by submit() to get verify() to return true    
+def flip_bits(ciphertext):
     print()
 
 
