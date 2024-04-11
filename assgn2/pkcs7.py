@@ -1,3 +1,4 @@
+from Crypto.Cipher import AES
 
 def pkcs7_pad(message, block_size):
     pad_length = block_size - (len(message) % block_size)
@@ -16,7 +17,7 @@ def pkcs7_unpad(padded_message, block_size):
 
 
 def test_pkcs7_padding():
-    block_size = 16
+    block_size = AES.block_size
     message = b"Hello world"
     padded_message = pkcs7_pad(message, block_size)
     assert len(padded_message) % block_size == 0
