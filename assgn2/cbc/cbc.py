@@ -32,7 +32,7 @@ def cbc_decrypt(ciphertext, key, iv):
     
     plaintext = pkcs7.pkcs7_unpad(plaintext, AES.block_size)  # Unpad the plaintext using PKCS7 padding
     
-    return plaintext[len(iv):]
+    return plaintext
 
 
 def encrypt_file(filename, key, iv):
