@@ -36,19 +36,10 @@ def verify(encrypted_string):
     else:
         return False
     
-def verify2(encrypted_string):
-    decrypted_string = cbc_decrypt(encrypted_string, KEY, IV)
-    # parse string for the pattern ";admin=true"
-    # decrypted_string = decrypted_string.decode("utf-8")
-    print(decrypted_string)
-    if ";admin=true" in decrypted_string:
-        return True
-    else:
-        return False
-    
 
 def calculate_bitmasks(original, target):
     bitmasks = []
+
     for i in range(len(original)):
         # Calculate the bitmask
         bitmask = ord(original[i]) ^ ord(target[i])
@@ -70,9 +61,9 @@ def flip_bits(ciphertext):
     ciphertext_chars = ciphertext_chars[:16] + ciphertext_chars[:16] + ciphertext_chars[16:]
 
     # We want to change "userid=456;" to ";admin=true"
-    original = str("userid=456%".encode('utf-8') + bytes([5]) * 5)  # 11 characters long w/ padding
-    target = str(";admin=true".encode('utf-8') + bytes([5]) * 5)  # 11 characters long w/ padding
-
+    original = ("userid=456%".encode('utf-8') + bytes([5]) * 5).decode("utf-8")  # 11 characters long w/ padding
+    target = (";admin=true".encode('utf-8') + bytes([5]) * 5).decode("utf-8")  # 11 characters long w/ padding
+    
     # Calculate the bitmasks
     bitmasks = calculate_bitmasks(original, target)
 
@@ -80,7 +71,7 @@ def flip_bits(ciphertext):
         ciphertext_chars[16 + i] ^= mask
 
 
-    # Convert the list of characters back to a string
+    # Convert the list of characters back to a byte string
     modified_ciphertext = bytes(ciphertext_chars)
     print(modified_ciphertext)
     return modified_ciphertext
@@ -90,7 +81,7 @@ def main():
     ciphertext = submit()
     print(verify(ciphertext))
     modified_ciphertext = flip_bits(ciphertext)
-    print(verify2(modified_ciphertext))
+    print(verify(modified_ciphertext))
 
 if __name__ == "__main__":
     main()
