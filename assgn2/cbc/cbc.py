@@ -2,7 +2,11 @@ from Crypto.Cipher import AES
 import sys
 sys.path.insert(0, "..")
 import pkcs7  
+import os
 
+
+KEY = os.urandom(16)
+IV = os.urandom(16)
 
 def cbc_encrypt(plaintext, key, iv):
     cipher = AES.new(key, AES.MODE_ECB)  # Create AES cipher object with ECB mode
@@ -52,10 +56,8 @@ def encrypt_file(filename, key, iv):
 
 
 def main():
-    sixteen_byte_key = b"iisixteenbytekey"
-    iv = b"sixteenbytekeyii"
-    encrypt_file("../cp-logo.bmp", sixteen_byte_key, iv)
-    encrypt_file("../mustang.bmp", sixteen_byte_key, iv)
+    encrypt_file("../cp-logo.bmp", KEY, IV)
+    encrypt_file("../mustang.bmp", KEY, IV)
 
 if __name__ == "__main__":
     main()
