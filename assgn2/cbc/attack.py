@@ -70,7 +70,7 @@ def flip_bits(ciphertext):
 
     # We want to change "userid=456;" to ";admin=true"
     original = ("userid%3D45".encode('utf-8') + bytes([5]) * 5).decode('utf-8')  # 11 characters long w/ padding
-    target = (";admin=true".encode('utf-8') + bytes([5]) * 5).decode('utf-8')  # 11 characters long w/ padding
+    target = (";admin=true;".encode('utf-8') + bytes([5]) * 5).decode('utf-8')  # 11 characters long w/ padding
 
     # Calculate the bitmasks
     bitmasks = calculate_bitmasks(original, target)
@@ -87,17 +87,21 @@ def flip_bits(ciphertext):
 
 
 def revise_flip_bits(ciphertext):
-    original = "userid%3D45".encode('utf-8') + bytes([5]) * 5
-    target = ";admin=true".encode('utf-8') + bytes([5]) * 5
+    # block 1: userid%3D456%3Bu
+    # block 2: serdata%3D123456 
+    # block 3: .admin1true.1234
+
+    original = "serdata%3D123456".encode('utf-8')
+    target = ";admin=true;".encode('utf-8') + bytes([4]) * 4
 
     mask = xor(original, target)
 
-    attack_block = pkcs7_pad(xor(mask, ciphertext[:16]), AES.block_size)
+    attack_block = pkcs7_pad(xor(mask, ciphertext), AES.block_size)
 
     # changing Ci will change Pi+1
-    print(cbc_decrypt(ciphertext, KEY, IV).decode('utf-8'))
-    print(cbc_decrypt(attack_block, KEY, IV).decode('utf-8'))
-    return attack_block + ciphertext
+    #print(cbc_decrypt(ciphertext, KEY, IV).decode('utf-8'))
+    #print(cbc_decrypt(attack_block, KEY, IV).decode('utf-8'))
+    return ciphertext[:32] + attack_block + ciphertext[32:]
 
 
 def main():
