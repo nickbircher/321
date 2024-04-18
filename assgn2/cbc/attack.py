@@ -11,6 +11,14 @@ KEY = os.urandom(16)
 IV = os.urandom(16)
 
 
+# XOR function for byte strings
+def xor(byte_string, key):
+    result = b""
+    for i in range(len(byte_string)):
+        result += bytes([byte_string[i] ^ key[i % len(key)]])
+    return result
+
+
 def submit():
     user_input = input("Enter a string: ")
     
@@ -29,7 +37,7 @@ def submit():
 def verify(encrypted_string):
     decrypted_string = cbc_decrypt(encrypted_string, KEY, IV)
     # parse string for the pattern ";admin=true"
-    decrypted_string = decrypted_string.decode("utf-8")
+    decrypted_string = decrypted_string.decode('utf-8')
     print(decrypted_string)
     if ";admin=true" in decrypted_string:
         return True
@@ -61,14 +69,15 @@ def flip_bits(ciphertext):
     ciphertext_chars = ciphertext_chars[:16] + ciphertext_chars[:16] + ciphertext_chars[16:]
 
     # We want to change "userid=456;" to ";admin=true"
-    original = ("userid=456%".encode('utf-8') + bytes([5]) * 5).decode("utf-8")  # 11 characters long w/ padding
-    target = (";admin=true".encode('utf-8') + bytes([5]) * 5).decode("utf-8")  # 11 characters long w/ padding
-    
+    original = ("userid=456%".encode('utf-8') + bytes([5]) * 5).decode('utf-8')  # 11 characters long w/ padding
+    target = (";admin=true".encode('utf-8') + bytes([5]) * 5).decode('utf-8')  # 11 characters long w/ padding
+
     # Calculate the bitmasks
     bitmasks = calculate_bitmasks(original, target)
 
     for i, mask in enumerate(bitmasks):
-        ciphertext_chars[16 + i] ^= mask
+        # Flip bits in the second block by XORing with the mask
+        ciphertext_chars[i] ^= mask
 
 
     # Convert the list of characters back to a byte string
@@ -77,10 +86,21 @@ def flip_bits(ciphertext):
     return modified_ciphertext
 
 
+def revise_flip_bits(ciphertext):
+    original = "userid=456%".encode('utf-8') + bytes([5]) * 5
+    target = ";admin=true".encode('utf-8') + bytes([5]) * 5
+
+    mask = xor(original, target)
+
+    attack_block = xor(mask, ciphertext[:16])
+
+    return attack_block + ciphertext
+
+
 def main():
     ciphertext = submit()
     print(verify(ciphertext))
-    modified_ciphertext = flip_bits(ciphertext)
+    modified_ciphertext = revise_flip_bits(ciphertext)
     print(verify(modified_ciphertext))
 
 if __name__ == "__main__":
