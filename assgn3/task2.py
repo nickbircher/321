@@ -39,84 +39,56 @@ def main():
 
     bm_s = hashlib.sha256(str(bob_shared_key).encode()).digest()[:16]
 
+    if (am_s == bm_s):
+        s = am_s
+    else:
+        raise TypeError
+
     # Define the AES-CBC cipher
-    am_cipher = AES.new(am_s, AES.MODE_CBC)
-    a_iv = am_cipher.iv
-    bm_cipher = AES.new(bm_s, AES.MODE_CBC)
-    b_iv = bm_cipher.iv
+    mallory_encrypt = AES.new(s, AES.MODE_CBC)
+    iv = mallory_encrypt.iv
+
+    mallory_decrypt = AES.new(s, AES.MODE_CBC, iv=iv)
 
     # Define the message and the initialization vector
     alice_message = b"This is a secret message from Alice."
     bob_message = b"This is a secret message from Bob."
 
-    
-
     # Pad the message to a multiple of 16 bytes and encrypt it
-    alice_ciphertext = am_cipher.encrypt(pad(alice_message, AES.block_size))
+    alice_ciphertext = mallory_encrypt.encrypt(pad(alice_message, AES.block_size))
 
-    bob_ciphertext = bm_cipher.encrypt(pad(bob_message, AES.block_size))
+    bob_ciphertext = mallory_encrypt.encrypt(pad(bob_message, AES.block_size))
 
     # # Print the ciphertext
-    # print("Ciphertext:", ciphertext.hex())
 
     # MALLORY DECRYPTION:
     # Mallory decrypts the ciphertext from Alice
-    am_decrypt = AES.new(am_s, AES.MODE_CBC, a_iv)
-    am_plainttext = unpad(am_decrypt.decrypt(alice_ciphertext), AES.block_size)
+    am_plainttext = unpad(mallory_decrypt.decrypt(alice_ciphertext), AES.block_size)
 
     # Print the decrypted message
     print("Decrypted message from Alice to Mallory:", am_plainttext.decode())
     
     # Mallory decrypts the ciphertext from Alice
-    bm_decrypt = AES.new(bm_s, AES.MODE_CBC, b_iv)
-    bm_plainttext = unpad(bm_decrypt.decrypt(bob_ciphertext), AES.block_size)
+    bm_plainttext = unpad(mallory_decrypt.decrypt(bob_ciphertext), AES.block_size)
 
     # Print the decrypted message
     print("Decrypted message from Bob to Mallory:", bm_plainttext.decode())
 
     # MALLORY ENCRYPTION:
-    
-    # MALLORY ENCRYPTION:
-    mallory_message_to_alice = b"Hi Alice"
-    mallory_message_to_bob = b"Hi Bob"
 
-    # Pad the messages to a multiple of 16 bytes and encrypt them
-    mallory_ciphertext_to_alice = am_cipher.encrypt(pad(mallory_message_to_alice, AES.block_size))
-    mallory_ciphertext_to_bob = bm_cipher.encrypt(pad(mallory_message_to_bob, AES.block_size))
+    # Mallory encrypts her own message and sends to Bob
+    mb_ctext = mallory_encrypt.encrypt(pad(b"Hello Bob, from Mallory", AES.block_size))
 
-    # Alice decrypts the message from Mallory
-    alice_decrypt = AES.new(am_s, AES.MODE_CBC, a_iv)
-    alice_plaintext_from_mallory = unpad(alice_decrypt.decrypt(mallory_ciphertext_to_alice), AES.block_size)
-    try:
-        alice_plaintext_from_mallory_str = alice_plaintext_from_mallory.decode('utf-8')
-    except UnicodeDecodeError:
-        alice_plaintext_from_mallory_str = alice_plaintext_from_mallory.decode('latin-1', errors='replace')
-    print("Decrypted message from Mallory to Alice:", alice_plaintext_from_mallory_str)
+    # Mallory encrypts her own message and sends to Alice
+    ma_ctext = mallory_encrypt.encrypt(pad(b"Hello Alice, from Mallory", AES.block_size))
 
-    # Bob decrypts the message from Mallory
-    bob_decrypt = AES.new(bm_s, AES.MODE_CBC, b_iv)
-    bob_plaintext_from_mallory = unpad(bob_decrypt.decrypt(mallory_ciphertext_to_bob), AES.block_size)
-    try:
-        bob_plaintext_from_mallory_str = bob_plaintext_from_mallory.decode('utf-8')
-    except UnicodeDecodeError:
-        bob_plaintext_from_mallory_str = bob_plaintext_from_mallory.decode('latin-1', errors='replace')
-    print("Decrypted message from Mallory to Bob:", bob_plaintext_from_mallory_str)
+    # Bob decrypts using his shared key with Mallory
+    mb_plaintext = unpad(mallory_decrypt.decrypt(mb_ctext), AES.block_size)
+    print("Decrypted message to Mallory to Bob: ", mb_plaintext.decode())
 
-
-
-
-
-
-
-    # # Mallory encrypts her own message and sends to Bob
-    # mb_ctext = bm_cipher.encrypt(pad(b"Hello Bob - Mallory", AES.block_size))
-
-    # # Bob decrypts using his shared key with Mallory
-    # mb_decrypt = AES.new(bm_s, AES.MODE_CBC, b_iv)
-    # mb_plaintext = unpad(mb_decrypt.decrypt(mb_ctext), AES.block_size)
-    # print(mb_plaintext.decode())
-
-    # # print("Decrypted message to Bob from Mallory: ", mb_plaintext.decode())
+    # Alice decrypts using his shared key with Mallory
+    ma_plaintext = unpad(mallory_decrypt.decrypt(ma_ctext), AES.block_size)
+    print("Decrypted message to Mallory to Alice: ", ma_plaintext.decode())
 
 if __name__ == "__main__":
     main()
