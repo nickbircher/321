@@ -37,9 +37,9 @@ def submit():
 def verify(encrypted_string):
     decrypted_string = cbc_decrypt(encrypted_string, KEY, IV)
     # parse string for the pattern ";admin=true"
-    decrypted_string = decrypted_string.decode('utf-8')
+    decrypted_string = decrypted_string.decode('utf-8', errors='ignore')
     print(decrypted_string)
-    if ";admin=true" in decrypted_string:
+    if ";admin=true;" in decrypted_string:
         return True
     else:
         return False
@@ -50,12 +50,13 @@ def flip_bits(ciphertext):
     # block 2: serdata%3D123456 
     # block 3: .admin1true.1234
 
-    original = "serdata%3D123456".encode('utf-8')
-    target = ";admin=true;".encode('utf-8') + bytes([4]) * 4
+    # input: 123456.admin1true.1234
+    original = ".admin1true.1234".encode('utf-8')
+    target = ";admin=true;1234".encode('utf-8')
 
     mask = xor(original, target)
 
-    attack_block = pkcs7_pad(xor(mask, ciphertext), AES.block_size)
+    attack_block = xor(mask, ciphertext[16:32])
 
     # changing Ci will change Pi+1
     #print(cbc_decrypt(ciphertext, KEY, IV).decode('utf-8'))
