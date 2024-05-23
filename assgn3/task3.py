@@ -43,43 +43,63 @@ def main():
 
     #print("decrpyt:", d1)
 
-    if (d1 == m1):
-        print("successfully decoded message 1.")
+    # if (d1 == m1):
+    #     print("successfully decoded message 1.")
 
-    m2 = int.from_bytes(b"mystring", byteorder='little')
+    # m2 = int.from_bytes(b"mystring", byteorder='little')
 
-    c2 = pow(m2, e, n)
+    # c2 = pow(m2, e, n)
 
-    d2 = pow(c2, d, n)
+    # d2 = pow(c2, d, n)
     
-    if(d2 == m2):
-        print("successfully decoded message 2.")
+    # if(d2 == m2):
+    #     print("successfully decoded message 2.")
 
-    m3 = int.from_bytes(b"this string is a little longer", byteorder='little')
+    # m3 = int.from_bytes(b"this string is a little longer", byteorder='little')
 
-    c3 = pow(m3, e, n)
+    # c3 = pow(m3, e, n)
 
-    d3 = pow(c3, d, n)
-    print("d3:", m3.to_bytes(byteorder='little'))
-    if(d3 == m3):
-        print("successfully decoded message 3.")
+    # d3 = pow(c3, d, n)
+    # if(d3 == m3):
+    #     print("successfully decoded message 3.")
 
+    #Bob calculation of private key
+    e = 65537
+    p = getPrime(2048)
+    q = getPrime(2048)
+    while (q==p):
+        q = getPrime(2048)
+    n = p*q
+    eulers_n = (p-1)*(q-1)
+    d = calculate_d(e, eulers_n)
+
+    #Here, Bob sends to Mallory his hashed key
+    bob_s = random.randint(0, n)
+    c = pow(bob_s, e,n) # this is the key intended to be sent
+
+    # and Mallory sends her 'key' to Alice
+    c = 0
+    # Mallory sends 0 instead so she can calculate hash
+    alice_s = pow(c, d, n)
+
+    alice_mallory_shared_key = hashlib.sha256(str(alice_s).encode()).digest()[:16]
     
-    # Mallory's MITM attack
+    m1 = b"Hi Bob, this is from Alice"
 
-    # Bob's message to 
-    m4 = int.from_bytes(b"mystring", byteorder='little')
+    encrypt = AES.new(alice_mallory_shared_key, AES.MODE_CBC)
+    iv = encrypt.iv
 
+    alice_ciphertext = encrypt.encrypt(pad(m1, AES.block_size))
 
-    c4 = pow(m4, e, n)
+    decrypt = AES.new(alice_mallory_shared_key, AES.MODE_CBC, iv=iv)
 
-    d4 = pow(c4, d, n)
-    
-    if(d4 == m4):
-        print("successfully decoded message 4.")
+    d1 = unpad(decrypt.decrypt(alice_ciphertext), AES.block_size)
 
+    print(m1)
+    print(d1.decode())
 
-
+    if (m1 == d1):
+        print("Mallory successfully intercepted message from Alice to BOB: ", d1.decode())
     return
 
 
